@@ -55,6 +55,7 @@ def call_internal_openai_api(
     timeout: float = 15.0
 ) -> Optional[str]:
     """사내 폐쇄망 OpenAI 규격(vLLM / NPO-MAXIS) API를 호출합니다."""
+    ssl_verify = os.getenv("SSL_VERIFY", "true").lower() in ("true", "1", "yes")
     headers = {
         "Authorization": f"Bearer {LLM_API_KEY}",
         "Content-Type": "application/json"
@@ -70,11 +71,19 @@ def call_internal_openai_api(
     }
 
     try:
-        with httpx.Client(timeout=timeout) as client:
+        with httpx.Client(timeout=timeout, verify=ssl_verify) as client:
             resp = client.post(f"{LLM_BASE_URL}/chat/completions", headers=headers, json=payload)
             if resp.status_code == 200:
                 data = resp.json()
                 return data["choices"][0]["message"]["content"]
+            # 사내 vLLM 서버가 response_format 파라미터를 지원하지 않아 400 에러를 뱉는 경우 대비
+            elif resp.status_code == 400:
+                logger.info("Internal LLM returned 400. Retrying without response_format parameter...")
+                payload.pop("response_format", None)
+                retry_resp = client.post(f"{LLM_BASE_URL}/chat/completions", headers=headers, json=payload)
+                if retry_resp.status_code == 200:
+                    data = retry_resp.json()
+                    return data["choices"][0]["message"]["content"]
     except Exception as e:
         logger.info("Internal LLM endpoint not reachable: %s", e)
 
@@ -106,6 +115,39 @@ def generate_llm_audit_fallback(
     context: str = ""
 ) -> Dict[str, Any]:
     """노란봉투법과 파견법 법리를 완벽 반영한 하네스 Fallback 생성기."""
+    # [A] 긴급 대피/작업중지권 상황 (산업안전보건법 제51조/제52조 정당한 긴급피난)
+    if pre_check.is_emergency_evacuation:
+        return {
+            "risk_level": "SAFE",
+            "risk_score": 0,
+            "summary": "산업안전보건법 제51조 및 제52조에 의거한 급박한 위험 시 정당한 근로자 긴급 대피 및 작업중지 조치입니다 (컴플라이언스 위반 소지 없음).",
+            "violations": [],
+            "flagged_phrases": pre_check.emergency_phrases,
+            "legal_basis": (
+                "산업안전보건법 제51조(사업주의 작업중지) 및 제52조(근로자의 작업중지)에 따르면, "
+                "화재, 폭발, 가스누출 등 산업재해가 발생할 급박한 위험이 있을 때의 즉각적 대피 명령은 "
+                "원청의 불법 지휘명령이나 노란봉투법상 부당한 노무제재에 해당하지 않으며, 법령상 인정되는 정당한 긴급구호권 행사입니다."
+            ),
+            "yellow_envelope_analysis": {
+                "is_substantial_control_detected": False,
+                "employer_status_risk": "LOW",
+                "statutory_articles": ["산업안전보건법 제51조", "산업안전보건법 제52조"],
+                "precedents": ["대법원 판례상 긴급구호 및 피난 조치의 정당성 인정 법리"],
+                "collective_bargaining_risk": "산업재해 예방을 위한 긴급 대피 조치이므로 부당노동행위 리스크가 없습니다."
+            },
+            "rewrites": [
+                {
+                    "channel": "현장 비상 방송 / 협력사 전 작업자 및 관리자",
+                    "rewritten_text": text,
+                    "key_points": ["비상 상황 대피 명령은 현 상태 그대로 즉시 전파하셔도 법적으로 완전 정당합니다."]
+                }
+            ],
+            "action_guides": [
+                "작업자 전원 안전 구역으로 즉각 대피 완료 후, 협력사 현장대리인 및 안전관리자에게 상황을 즉시 공유하십시오.",
+                "원청-협력사 합동 안전 점검 및 위험 요소 완전 제거 전까지는 작업을 재개하지 마십시오."
+            ]
+        }
+
     yellow_envelope_triggered = any(
         f.violation_type in [
             ViolationType.SUBSTANTIAL_CONTROL_SAFETY,

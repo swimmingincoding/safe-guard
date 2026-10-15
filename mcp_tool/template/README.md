@@ -1,7 +1,7 @@
 # Safe-Guard Agent (FastMCP Server)
 
 원하청 적법 도급(Compliance) 관리를 위한 실시간 업무 지시 가이드 및 노무 Q&A 에이전트의 MCP 서버입니다.  
-사내 폐쇄망 환경에서 **Dify 오케스트레이터의 Custom Tool**로 연동되어 구동됩니다.
+사내 폐쇄망 환경에서 **Dify 오케스트레이터의 Custom Tool**로 연동되어 구동됩니다 (상세 워크플로우 캔버스 설정: [Dify 구축 가이드](appendix/DIFY_WORKFLOW_GUIDE.md)).
 
 ---
 
@@ -39,9 +39,9 @@
 
 ```text
 data/guidelines/
-├── 01_subcontract_guidelines.md   # 사내 도급 운영 컴플라이언스 가이드라인 (제1조 ~ 제12조 표준 전문)
-├── 02_labor_ministry_qa.md        # 고용노동부 사내하도급 실무 판단기준 및 빈출 Q&A (식대, SOP, 고용승계 등)
-└── 03_court_precedents.md         # 대법원 및 법원 주요 불법파견/노란봉투법 핵심 판례 50선 요약집
+├── 01_subcontract_guidelines.md   # 사내 도급 운영 컴플라이언스 가이드라인 (제1조 ~ 제25조 전면 개정 전문)
+├── 02_labor_ministry_qa.md        # 고용노동부 사내하도급 실무 판단기준 및 빈출 Q&A (식대, OJT, 명절선물, 클린룸 등 Q1~Q20)
+└── 03_court_precedents.md         # 대법원 및 법원 주요 불법파견/노란봉투법 핵심 판례 15선 요약집 (현대차, 포스코, 삼성전자서비스 등)
 ```
 
 > **💡 사내 실제 문서로 교체하는 방법**:  
@@ -103,6 +103,7 @@ python tests/test_suite.py
   1. **고위험 지시어 & 노란봉투법**: 특정인 직접 지시 및 안전보건 제재 징표 탐지
   2. **회색지대(Gray Zone) 판별력**: 청유형 위장 지시(위험) vs 정당한 하자보수(합법) 분별
   3. **사내 규정 RAG Q&A**: 식당 식대 지원, SOP 열람 등 사내 규정 제O조 인용 확인
+  4. **최신 법원 판례 및 산안법 긴급권 정밀 판별**: 산업안전보건법 긴급대피(SAFE 0점 인정), 포스코 판례(단톡방 지시 적발), 현대차 판례(MES 전산지시 적발), 원하청 혼재작업 적발, 현장대리인 공식소통 적법성 유지
 
 ---
 
@@ -124,3 +125,23 @@ $env:PORT=8000; python src/main.py
 - `GEMINI_API_KEY`: 테스트 단계 Google Gemini API 키
 - `LLM_BASE_URL`: 사내 OpenAI 호환 API 엔드포인트 URL (기본: `http://localhost:8000/v1`)
 - `LLM_MODEL_NAME`: 사내 서빙 모델명 (예: `GLM-5.3-Flash`, `npo-maxis-llm` 등)
+
+---
+
+## 7. 기술 백서 및 부록 (Appendix)
+
+시스템의 하네스 엔지니어링 아키텍처, 무결성 안전장치 및 Dify 실전 구축 가이드는 아래 부록 문서에서 확인하실 수 있습니다:
+
+- 📖 **[하네스 엔지니어링 아키텍처 및 안전장치 백서](appendix/HARNESS_ARCHITECTURE_AND_SAFETY.md)**
+  1. 질문 인입부터 최종 답변 도출까지 전체 라이프사이클 (E2E Mermaid 다이어그램)
+  2. 왜 이것이 '하네스 엔지니어링(Harness Engineering)'인가? (나이브 LLM vs 하네스 비교)
+  3. 엉뚱한 답변을 원천 차단하는 5중 무결성 방어벽
+  4. [심층 분석 1] 제5방어벽 Fallback 엔진의 답변이 100% 신뢰 가능한 이유 (전문가 규칙 시스템)
+  5. [심층 분석 2] RAG 검색 결과가 엉뚱한 조항을 물어오지 않는다고 확신하는 이유 (도메인 부스팅 및 Bounding)
+  6. 경연대회 심사위원 및 사내 보고용 핵심 엘리베이터 피치
+- 🛠️ **[Dify 워크플로우 구축 실전 가이드](appendix/DIFY_WORKFLOW_GUIDE.md)**
+  1. Dify 커스텀 도구(FastMCP) 등록 절차
+  2. 5개 노드(Start, Router, Tool, Formatter, Answer) 프롬프트 및 설정 전문
+  3. 사내 LLM 호출 상태 실시간 모니터링 (`llm_invoked`, `execution_mode`)
+
+

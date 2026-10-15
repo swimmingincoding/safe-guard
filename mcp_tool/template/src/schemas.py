@@ -20,11 +20,14 @@ class ViolationType(str, Enum):
     SUBSTANTIAL_CONTROL_PRICE = "SUBSTANTIAL_CONTROL_PRICE"            # 도급비/인건비 일방 결정 및 노동조건 구속
 
     # [2] 파견법(파견근로자보호법) 불법 파견 위반 유형
-    DIRECT_COMMAND = "DIRECT_COMMAND"                                  # 개별 근로자에 대한 직접적 업무수행 지휘·명령
+    DIRECT_COMMAND = "DIRECT_COMMAND"                                  # 개별 근로자에 대한 직접적 업무수행 지휘·명령 (위장 청유형 포함)
     SPECIFIC_PERSON_ASSIGNMENT = "SPECIFIC_PERSON"                     # 협력사 특정 근로자 개별 지목 및 작업 할당
     ATTENDANCE_TIME_CONTROL = "ATTENDANCE_TIME_CONTROL"                # 출퇴근, 연장/야간근로 등 직접 시간 통제
     WORK_METHOD_CONTROL = "WORK_METHOD_CONTROL"                        # 구체적 작업 방식, 순서, 절차 직접 구속/간섭
     EVALUATION_DISCIPLINE = "EVALUATION_DISCIPLINE"                    # 협력사 근로자 인사평가, 징계, 근태 승인 관여
+    DIGITAL_SYSTEM_CONTROL = "DIGITAL_SYSTEM_CONTROL"                  # MES/전산단말기 매개 실시간 작업순서·할당 지휘명령
+    INFORMAL_COMMUNICATION = "INFORMAL_COMMUNICATION"                  # 카카오톡/단톡방/개인메신저 등 비공식 실시간 작업지시
+    MIXED_WORK_ORGANIZATION = "MIXED_WORK_ORGANIZATION"                # 원하청 혼재작업 및 원청 조직으로의 노무 편입
 
 
 class RuleFinding(BaseModel):
@@ -37,10 +40,13 @@ class RuleFinding(BaseModel):
 class PreCheckResult(BaseModel):
     """사전 규칙(Harness Pre-Guardrail) 검사 결과"""
     has_risk: bool = False
+    is_emergency_evacuation: bool = False  # 산업안전보건법상 급박한 위험으로 인한 적법한 긴급 대피/작업중지 여부
+    has_site_representative: bool = False  # 협력사 현장대리인(소장 등) 공식 수신처 지정 여부
     suspected_names: List[str] = Field(default_factory=list)
     command_phrases: List[str] = Field(default_factory=list)
     time_constraints: List[str] = Field(default_factory=list)
     safety_discipline_phrases: List[str] = Field(default_factory=list)
+    emergency_phrases: List[str] = Field(default_factory=list)
     findings: List[RuleFinding] = Field(default_factory=list)
 
 
@@ -73,6 +79,8 @@ class DirectionAuditResponse(BaseModel):
     rewrites: List[RewriteSuggestion] = Field(default_factory=list)
     action_guides: List[str] = Field(default_factory=list)
     verification_passed: bool = Field(default=True, description="Harness Verifier 통과 여부")
+    llm_invoked: str = Field(default="N", description="사내 LLM 실제 호출 여부 ('Y' 또는 'N')")
+    execution_mode: str = Field(default="HARNESS_FALLBACK", description="실행 모드 ('INTERNAL_LLM' 또는 'HARNESS_FALLBACK')")
 
 
 class LaborQAResponse(BaseModel):
@@ -84,3 +92,5 @@ class LaborQAResponse(BaseModel):
     do_and_dont: List[str] = Field(default_factory=list)
     recommended_action: str
     references: List[str] = Field(default_factory=list)
+    llm_invoked: str = Field(default="N", description="사내 LLM 실제 호출 여부 ('Y' 또는 'N')")
+    execution_mode: str = Field(default="HARNESS_FALLBACK", description="실행 모드 ('INTERNAL_LLM' 또는 'HARNESS_FALLBACK')")

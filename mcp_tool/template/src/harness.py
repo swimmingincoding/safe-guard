@@ -28,6 +28,25 @@ def audit_direction_harness(instruction_text: str, context_info: str = "") -> Di
     # [1단계] Pre-Guardrail (규칙 기반 사전 검사: 0.001초 소요)
     pre_check = run_pre_guardrail(instruction_text)
 
+    # [1-1단계] 산업안전보건법상 급박한 위험으로 인한 정당한 긴급 대피/작업중지인 경우 즉시 적법 판정 반환
+    if pre_check.is_emergency_evacuation:
+        audit_data = generate_llm_audit_fallback(instruction_text, pre_check, context_info)
+        return DirectionAuditResponse(
+            original_text=instruction_text,
+            risk_level=RiskLevel.SAFE,
+            risk_score=0,
+            summary=audit_data["summary"],
+            violations=[],
+            flagged_phrases=audit_data.get("flagged_phrases", []),
+            legal_basis=audit_data["legal_basis"],
+            yellow_envelope_analysis=YellowEnvelopeAnalysis(**audit_data["yellow_envelope_analysis"]),
+            rewrites=[RewriteSuggestion(**rw) for rw in audit_data["rewrites"]],
+            action_guides=audit_data["action_guides"],
+            verification_passed=True,
+            llm_invoked="N",
+            execution_mode="HARNESS_EMERGENCY_PROTECTION"
+        )
+
     # [2단계] LLM 호출 준비 (노란봉투법 실제 법문 및 대법원/고법 판례 전문 주입)
     system_prompt = f"""당신은 사내 외주/도급 컴플라이언스 및 '노란봉투법(노동조합 및 노동관계조정법 개정안)' 최고 전문 법무 노무 AI 에이전트입니다.
 
@@ -39,17 +58,28 @@ def audit_direction_harness(instruction_text: str, context_info: str = "") -> Di
 2. {YELLOW_ENVELOPE_LAW_ARTICLES['ARTICLE_2_CLAUSE_5']['law_name']}:
 {YELLOW_ENVELOPE_LAW_ARTICLES['ARTICLE_2_CLAUSE_5']['original_text']}
 
-[적용 판례 기준]
+[대법원 및 법원 핵심 판례 기준]
 - {LEADING_PRECEDENTS[0]['case_name']}: {LEADING_PRECEDENTS[0]['key_ruling']}
 - {LEADING_PRECEDENTS[1]['case_name']}: {LEADING_PRECEDENTS[1]['key_ruling']}
 - {LEADING_PRECEDENTS[2]['case_name']}: {LEADING_PRECEDENTS[2]['key_ruling']}
+- {LEADING_PRECEDENTS[3]['case_name']}: {LEADING_PRECEDENTS[3]['key_ruling']}
+- {LEADING_PRECEDENTS[4]['case_name']}: {LEADING_PRECEDENTS[4]['key_ruling']}
 
-[원청의 실질적 지배력 5대 위험 징표]
-1) 안전보건/보호구 직접 제재 또는 벌점/출입금지 위협 (SUBSTANTIAL_CONTROL_SAFETY)
+[원청의 실질적 지배력 및 불법파견 핵심 징표]
+1) 안전보건/보호구 직접 제재 또는 벌점/출입금지 위협 (SUBSTANTIAL_CONTROL_SAFETY) - 단, 산안법상 긴급 피난/대피는 정당
 2) 근로시간, 휴게시간, 식사시간의 일방적 배분/단축 통제 (SUBSTANTIAL_CONTROL_TIME_REST)
 3) 협력사 직원의 징계, 출입증 회수, 라인 배치전환 강제 (SUBSTANTIAL_CONTROL_DISCIPLINE)
 4) 택트타임, 라인속도 통제를 통한 노동강도 직접 지배 (SUBSTANTIAL_CONTROL_WORKLOAD)
 5) 특정 작업자 직접 지휘명령 및 개별 작업 할당 (DIRECT_COMMAND, SPECIFIC_PERSON)
+6) 청유형/부탁형으로 위장된 직접 지시 및 시간 압박 (DIRECT_COMMAND, ATTENDANCE_TIME_CONTROL)
+7) 카카오톡/단톡방/비공식 메신저 매개 실시간 작업 지시/보고 통제 (INFORMAL_COMMUNICATION)
+8) 스마트팩토리 MES/전산 단말기 매개 실시간 작업순서·할당 통제 (DIGITAL_SYSTEM_CONTROL)
+9) 원하청 혼재작업 및 원청 고유 조직으로의 실질적 노무 편입 (MIXED_WORK_ORGANIZATION)
+
+[적법성 예외 분별 기준]
+- 협력사 현장대리인(소장, 관리자)을 공식 수신처로 지정한 도급 물량/일정 협의는 100% 합법(SAFE)입니다.
+- 민법 제667조에 따른 완성된 결과물의 사양 미달에 대한 정당한 하자보수/재작업 청구는 합법(SAFE)입니다.
+- 화재, 가스누출 등 급박한 산업재해 위험 시의 즉각적 긴급 대피 명령은 산안법상 정당한 조치입니다.
 
 원청 실무자의 문장을 위 법조문과 판례에 비추어 철저히 검증하고, 반드시 유효한 JSON 형식으로만 응답하십시오.
 """
@@ -70,9 +100,9 @@ def audit_direction_harness(instruction_text: str, context_info: str = "") -> Di
   "risk_level": "SAFE" | "CAUTION" | "DANGER",
   "risk_score": 0~100 숫자,
   "summary": "핵심 판정 요약 1~2문장",
-  "violations": ["SUBSTANTIAL_CONTROL_SAFETY", "SUBSTANTIAL_CONTROL_TIME_REST", "SUBSTANTIAL_CONTROL_DISCIPLINE", "SUBSTANTIAL_CONTROL_WORKLOAD", "DIRECT_COMMAND", "SPECIFIC_PERSON", "ATTENDANCE_TIME_CONTROL"],
+  "violations": ["SUBSTANTIAL_CONTROL_SAFETY", "SUBSTANTIAL_CONTROL_TIME_REST", "SUBSTANTIAL_CONTROL_DISCIPLINE", "SUBSTANTIAL_CONTROL_WORKLOAD", "DIRECT_COMMAND", "SPECIFIC_PERSON", "ATTENDANCE_TIME_CONTROL", "WORK_METHOD_CONTROL", "DIGITAL_SYSTEM_CONTROL", "INFORMAL_COMMUNICATION", "MIXED_WORK_ORGANIZATION"],
   "flagged_phrases": ["위반 소지가 있는 원문 내 단어들"],
-  "legal_basis": "노조법 제2조 제2호 및 관련 판례(서울고법 2023누35795 등) 인용 요약",
+  "legal_basis": "노조법 제2조 제2호, 파견법 및 관련 판례(서울고법 2023누35795, 대법원 2016다50768 등) 인용 요약",
   "yellow_envelope_analysis": {{
     "is_substantial_control_detected": true 또는 false,
     "employer_status_risk": "HIGH" | "MEDIUM" | "LOW",
@@ -93,6 +123,7 @@ def audit_direction_harness(instruction_text: str, context_info: str = "") -> Di
 
     raw_response = call_internal_llm(system_prompt, user_prompt)
     audit_data = None
+    llm_invoked = "N"
 
     if raw_response:
         try:
@@ -102,11 +133,13 @@ def audit_direction_harness(instruction_text: str, context_info: str = "") -> Di
                 if cleaned.endswith("```"):
                     cleaned = cleaned.rsplit("```", 1)[0]
             audit_data = json.loads(cleaned.strip())
+            llm_invoked = "Y"
         except Exception as e:
             logger.warning("LLM output JSON parse error: %s. Using harness fallback.", e)
 
     if not audit_data:
         audit_data = generate_llm_audit_fallback(instruction_text, pre_check, context_info)
+        llm_invoked = "N"
 
     # [3단계] Post-Guardrail Verifier (출력문 적법성 검증 및 자동 보정)
     verified_rewrites: List[RewriteSuggestion] = []
@@ -152,7 +185,9 @@ def audit_direction_harness(instruction_text: str, context_info: str = "") -> Di
         yellow_envelope_analysis=yellow_envelope,
         rewrites=verified_rewrites,
         action_guides=audit_data.get("action_guides", []),
-        verification_passed=all_passed
+        verification_passed=all_passed,
+        llm_invoked=llm_invoked,
+        execution_mode="INTERNAL_LLM" if llm_invoked == "Y" else "HARNESS_FALLBACK"
     )
 
 
@@ -204,6 +239,7 @@ def answer_labor_qa_harness(question: str) -> LaborQAResponse:
 
     raw_response = call_internal_llm(system_prompt, user_prompt)
     qa_data = None
+    llm_invoked = "N"
 
     if raw_response:
         try:
@@ -213,11 +249,13 @@ def answer_labor_qa_harness(question: str) -> LaborQAResponse:
                 if cleaned.endswith("```"):
                     cleaned = cleaned.rsplit("```", 1)[0]
             qa_data = json.loads(cleaned.strip())
+            llm_invoked = "Y"
         except Exception as e:
             logger.warning("Labor QA LLM JSON parse error: %s. Using RAG fallback.", e)
 
     # LLM 미응답/오류 시 RAG 검색 원문 기반 Fallback 응답 조립
     if not qa_data:
+        llm_invoked = "N"
         if retrieved_chunks:
             top_chunk = retrieved_chunks[0]
             qa_data = {
@@ -249,6 +287,8 @@ def answer_labor_qa_harness(question: str) -> LaborQAResponse:
         legal_basis=qa_data.get("legal_basis", ""),
         do_and_dont=qa_data.get("do_and_dont", []),
         recommended_action=qa_data.get("recommended_action", ""),
-        references=references if references else ["사내 도급 운영 가이드라인"]
+        references=references if references else ["사내 도급 운영 가이드라인"],
+        llm_invoked=llm_invoked,
+        execution_mode="INTERNAL_LLM" if llm_invoked == "Y" else "HARNESS_FALLBACK"
     )
 

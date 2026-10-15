@@ -21,7 +21,13 @@ COMPLIANT_REQUEST_ENDINGS = [
 # 재작성문에 절대 남아있으면 안 되는 직접 명령형 어투
 STRICT_FORBIDDEN_ENDINGS = [
     "끝내세요", "끝내라", "마치세요", "마쳐라", "수행하세요", "작업하세요",
-    "보고하세요", "해놓으세요", "해라", "출근하세요", "잔업하세요"
+    "보고하세요", "해놓으세요", "해라", "출근하세요", "잔업하세요", "야근하세요",
+    "투입하세요", "대기하세요", "조치하세요", "확인하세요", "처리하세요", "철야하세요"
+]
+
+# 재작성문에 남아있으면 안 되는 비공식 소통 채널 표현
+FORBIDDEN_CHANNEL_WORDS = [
+    "카톡으로", "카톡에", "단톡방에", "단톡에", "갠톡으로", "개인 톡으로"
 ]
 
 
@@ -38,19 +44,27 @@ def verify_rewrite_suggestion(
         if name in text:
             issues.append(f"잔존 인명 검출: '{name}'이 변환문에서 완전히 제거되지 않음")
             # 자동 보정: 특정 인명을 도급 업무 주체 표현으로 교체
-            text = text.replace(name, "해당 공정 담당 작업자")
+            text = text.replace(name + "님", "해당 공정 담당 작업자")
+            text = text.replace(name + "에게", "협력사 소속 작업자에게")
+            text = text.replace(name, "해당 공정 작업자")
 
     # 2. 금지된 직접 명령 어투 잔존 검사
     for forbidden in STRICT_FORBIDDEN_ENDINGS:
         if forbidden in text:
             issues.append(f"직접 명령 어투 잔존: '{forbidden}' 표현 발견")
             # 자동 보정: 정중한 도급 협조 요청으로 치환
-            text = text.replace(forbidden, "완료될 수 있도록 협조 요청드립니다")
+            text = text.replace(forbidden, "진행될 수 있도록 협조 요청드립니다")
 
-    # 3. 현장 대리인 / 공식 채널 명시 여부 검사
+    # 3. 비공식 소통 채널 잔존 검사
+    for ch in FORBIDDEN_CHANNEL_WORDS:
+        if ch in text:
+            issues.append(f"비공식 채널 잔존: '{ch}' 표현 발견")
+            text = text.replace(ch, "협력사 공식 업무 채널을 통해")
+
+    # 4. 현장 대리인 / 공식 채널 명시 여부 검사
     channel_valid = any(
         kw in suggestion.channel or kw in text
-        for kw in ["현장대리인", "소장", "반장", "관리자", "협력사 대표", "귀하"]
+        for kw in ["현장대리인", "소장", "총괄", "관리자", "협력사 대표", "귀하"]
     )
     if not channel_valid:
         issues.append("전달 채널 미흡: 현장 대리인(소장/관리자) 경유 표기 누락")

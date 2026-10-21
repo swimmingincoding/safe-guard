@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Safe-Guard Agent: 원하청 적법 도급 실시간 가이드 에이전트 발표자료</title>
+  <!-- Google Fonts & Pretendard -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
+  <style>
+    :root {
+      /* SK Corporate Brand Colors */
+      --sk-red: #E1002A;
+      --sk-red-dark: #B80022;
+      --sk-red-light: #FF2E4D;
+      --sk-red-pale: rgba(225, 0, 42, 0.06);
+      --sk-red-border: rgba(225, 0, 42, 0.22);
+
+      --sk-orange: #F7941D;
+      --sk-orange-dark: #D47407;
+      --sk-orange-light: #FFA834;
+      --sk-orange-pale: rgba(247, 148, 29, 0.08);
+      --sk-orange-border: rgba(247, 148, 29, 0.28);
+
+      --grad-sk: linear-gradient(135deg, #E1002A 0%, #F7941D 100%);
+      --grad-sk-reverse: linear-gradient(135deg, #F7941D 0%, #E1002A 100%);
+      --grad-sk-soft: linear-gradient(135deg, rgba(225, 0, 42, 0.05) 0%, rgba(247, 148, 29, 0.08) 100%);
+
+      /* Clean White-tone Foundations */
+      --bg-page: #F6F8FB;
+      --card-bg: #FFFFFF;
+      --card-border: rgba(0, 0, 0, 0.07);
+      --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.06), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+      --card-shadow-hover: 0 20px 40px -8px rgba(225, 0, 42, 0.12), 0 8px 16px -4px rgba(0, 0, 0, 0.04);
+
+      /* Typography */
+      --text-title: #191F28;
+      --text-main: #333D4B;
+      --text-muted: #6B7684;
+      --text-sub: #8B95A1;
+
+      --font-heading: 'Outfit', 'Pretendard', -apple-system, sans-serif;
+      --font-body: 'Pretendard', 'Inter', -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 15%, rgba(225, 0, 42, 0.04) 0%, transparent 45%),
+        radial-gradient(circle at 90% 85%, rgba(247, 148, 29, 0.05) 0%, transparent 45%),
+        linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+    }
+
+    /* Top Control Bar */
+    .control-bar {
+      position: fixed;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 9999px;
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 1000;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-heading);
+      font-weight: 800;
+      font-size: 15px;
+      color: var(--text-title);
+      letter-spacing: -0.4px;
+    }
+
+    .brand-logo span.highlight {
+      background: var(--grad-sk);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .timer-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--sk-red-pale);
+      border: 1px solid var(--sk-red-border);
+      border-radius: 9999px;
+      padding: 4px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--sk-red);
+    }
+
+    .timer-badge.warning {
+      background: rgba(225, 0, 42, 0.15);
+      color: var(--sk-red-dark);
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(0.96); }
+    }
+
+    .ctrl-btn {
+      background: #FFFFFF;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      color: var(--text-main);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .ctrl-btn:hover {
+      background: var(--grad-sk);
+      color: #FFFFFF;
+      border-color: transparent;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(225, 0, 42, 0.25);
+    }
+
+    /* Deck Container */
+    .deck-container {
+      width: 1220px;
+      max-width: 95vw;
+      height: 685px; /* 16:9 Ratio */
+      max-height: 85vh;
+      position: relative;
+      margin-top: 50px;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 46px 54px;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: var(--card-shadow);
+      opacity: 0;
+      transform: translateY(12px) scale(0.985);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+
+    .slide.active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Watermark Happy Wings in Slide Background */
+    .slide-watermark {
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 320px;
+      height: 220px;
+      opacity: 0.04;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Slide Header */
+    .slide-header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .slide-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--sk-red-pale);
+      border: 1px solid var(--sk-red-border);
+      color: var(--sk-red);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      margin-bottom: 8px;
+    }
+
+    .slide-badge svg {
+      vertical-align: middle;
+    }
+
+    .slide-title {
+      font-family: var(--font-heading);
+      font-size: 33px;
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: -0.8px;
+      color: var(--text-title);
+    }
+
+    .slide-title span {
+      background: var(--grad-sk);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .slide-subtitle {
+      color: var(--text-muted);
+      font-size: 15.5px;
+      margin-top: 5px;
+      font-weight: 500;
+    }
+
+    .slide-number {
+      font-family: var(--font-heading);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: #F1F4F8;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      padding: 6px 14px;
+      border-radius: 9999px;
+    }
+
+    /* Slide Content Grid & Cards */
+    .slide-body {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 18px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 18px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: #FFFFFF;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 16px;
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    .card:hover {
+      border-color: var(--sk-orange-border);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px -4px rgba(247, 148, 29, 0.12), 0 4px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    .card-icon {
+      font-size: 26px;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-title);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.3px;
+    }
+
+    .card-desc {
+      font-size: 13.8px;
+      color: var(--text-muted);
+      line-height: 1.62;
+    }
+
+    .card-desc strong {
+      color: var(--text-title);
+      font-weight: 600;
+    }
+
+    /* Specialized Cards */
+    .highlight-card {
+      background: var(--grad-sk-soft);
+      border: 1px solid var(--sk-orange-border);
+      position: relative;
+    }
+
+    .highlight-card:hover {
+      border-color: var(--sk-red);
+      box-shadow: var(--card-shadow-hover);
+    }
+
+    .danger-card {
+      background: #FFF9F9;
+      border: 1px solid rgba(225, 0, 42, 0.2);
+    }
+
+    .danger-card:hover {
+      border-color: var(--sk-red);
+      box-shadow: 0 10px 24px -4px rgba(225, 0, 42, 0.15);
+    }
+
+    .danger-card .card-title {
+      color: var(--sk-red-dark);
+    }
+
+    .success-card {
+      background: #F4FDF8;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    .success-card .card-title {
+      color: #047857;
+    }
+
+    /* Diagram Pill Box (Slide 4) */
+    .flow-steps {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 6px 0;
+    }
+
+    .flow-node {
+      flex: 1;
+      background: #FFFFFF;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 14px;
+      padding: 16px 14px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+      transition: all 0.2s ease;
+    }
+
+    .flow-node.active-node {
+      background: #FFFDFC;
+      border: 1.5px solid var(--sk-orange);
+      box-shadow: 0 6px 16px -2px rgba(247, 148, 29, 0.18);
+    }
+
+    .flow-node .step-num {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--sk-red);
+      letter-spacing: 0.8px;
+      margin-bottom: 4px;
+    }
+
+    .flow-node .step-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--text-title);
+    }
+
+    .flow-arrow {
+      color: var(--sk-orange);
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    /* Code Snippet / Comparison Box (Slide 3) */
+    .compare-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      background: #F8FAFC;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 14px;
+      padding: 16px 18px;
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+
+    .compare-side {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .compare-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 6px;
+      width: fit-content;
+      letter-spacing: 0.3px;
+    }
+
+    .compare-tag.danger {
+      background: rgba(225, 0, 42, 0.1);
+      color: var(--sk-red);
+      border: 1px solid rgba(225, 0, 42, 0.25);
+    }
+
+    .compare-tag.safe {
+      background: rgba(5, 150, 105, 0.1);
+      color: #059669;
+      border: 1px solid rgba(5, 150, 105, 0.25);
+    }
+
+    /* Slide Footer */
+    .slide-footer {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0, 0, 0, 0.06);
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .key-metric {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .key-metric .val {
+      font-family: var(--font-heading);
+      font-weight: 800;
+      color: var(--sk-red);
+      font-size: 15.5px;
+    }
+
+    /* Progress Dots */
+    .nav-dots {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 9999px;
+      background: rgba(0, 0, 0, 0.12);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dot.active {
+      background: var(--grad-sk);
+      width: 28px;
+      box-shadow: 0 2px 8px rgba(225, 0, 42, 0.3);
+    }
+
+    /* Speaker Notes Drawer */
+    .notes-drawer {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120%);
+      width: 920px;
+      max-width: 92vw;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1.5px solid var(--sk-red-border);
+      border-radius: 18px;
+      padding: 18px 24px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(225, 0, 42, 0.08);
+      z-index: 1200;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .notes-drawer.open {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .notes-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--sk-red);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .notes-body {
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: var(--text-main);
+      background: #F8FAFC;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border-left: 3.5px solid var(--sk-red);
+    }
+
+    /* Print / PDF Mode - 16:9 Landscape & SK Brand Color Preservation */
+    @page {
+      size: 16in 9in; /* 16:9 HD Presentation Standard */
+      margin: 0;
+    }
+
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+
+      html, body {
+        background: #FFFFFF !important;
+        color: #191F28 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 100% !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .control-bar, .notes-drawer {
+        display: none !important;
+      }
+
+      .deck-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        position: static !important;
+      }
+
+      .slide {
+        position: relative !important;
+        display: flex !important;
+        opacity: 1 !important;
+        transform: none !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        background: #FFFFFF !important;
+        color: #191F28 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        min-height: 100vh !important;
+        margin: 0 !important;
+        padding: 44px 56px !important;
+        box-sizing: border-box !important;
+      }
+
+      /* 핵심 해결책: WebKit 인쇄 시 -webkit-text-fill-color: transparent 누락 버그 원천 해결 */
+      /* 그라디언트 텍스트 클립을 선명한 SK Red 단색으로 강제 치환하여 글자 누락 방지 */
+      .slide-title span,
+      .brand-logo span.highlight,
+      span[style*="-webkit-text-fill-color"],
+      span[style*="-webkit-background-clip"],
+      h3 span {
+        background: none !important;
+        -webkit-background-clip: initial !important;
+        background-clip: initial !important;
+        -webkit-text-fill-color: #E1002A !important;
+        color: #E1002A !important;
+        display: inline !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+
+      /* SK Red & Orange 브랜드 컬러 인쇄 보존 */
+      .slide-badge {
+        background: #FFF0F2 !important;
+        color: #E1002A !important;
+        border: 1px solid #FFCCD3 !important;
+      }
+
+      .key-metric .val {
+        color: #E1002A !important;
+      }
+
+      .step-num {
+        color: #E1002A !important;
+      }
+
+      .flow-arrow {
+        color: #F7941D !important;
+      }
+
+      .danger-card {
+        background: #FFF5F5 !important;
+        border: 1px solid #FFCCD3 !important;
+      }
+
+      .danger-card .card-title {
+        color: #B80022 !important;
+      }
+
+      .highlight-card {
+        background: #FFFBF6 !important;
+        border: 1px solid #FFE4C7 !important;
+      }
+
+      .success-card {
+        background: #F4FDF8 !important;
+        border: 1px solid #A7F3D0 !important;
+      }
+
+      .compare-box {
+        background: #F8FAFC !important;
+        border: 1px solid #E2E8F0 !important;
+      }
+
+      .compare-tag.danger {
+        background: #FEE2E2 !important;
+        color: #DC2626 !important;
+      }
+
+      .compare-tag.safe {
+        background: #D1FAE5 !important;
+        color: #059669 !important;
+      }
+
+      .slide-watermark {
+        opacity: 0.08 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SK Happy Wings Reusable Symbol Defs -->
+  <svg style="display: none;">
+    <defs>
+      <linearGradient id="skWingRedGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#E1002A"/>
+        <stop offset="100%" stop-color="#FF2E4D"/>
+      </linearGradient>
+      <linearGradient id="skWingOrangeGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#F7941D"/>
+        <stop offset="100%" stop-color="#FFA834"/>
+      </linearGradient>
+
+      <!-- SK Happy Wings Symbol -->
+      <g id="sk-happy-wing-symbol">
+        <!-- 뒷날개 (SK Orange: 행복/고객지향) -->
+        <path d="M18 38 C 28 34, 44 24, 62 8 C 66 4, 68 2, 69 0 C 67 4, 60 14, 50 24 C 40 32, 28 38, 18 38 Z" fill="url(#skWingOrangeGrad)" />
+        <!-- 앞날개 (SK Red: 도전/패기) -->
+        <path d="M4 30 C 14 24, 32 14, 48 2 C 52 0, 54 0, 55 0 C 53 4, 46 13, 36 22 C 24 30, 12 32, 4 30 Z" fill="url(#skWingRedGrad)" />
+      </g>
+    </defs>
+  </svg>
+
+  <!-- Top Controller -->
+  <div class="control-bar" id="controlBar">
+    <div class="brand-logo">
+      <svg viewBox="0 0 72 40" width="34" height="20" style="vertical-align: middle;">
+        <use href="#sk-happy-wing-symbol"/>
+      </svg>
+      <span>SK(주)AX <span class="highlight">Safe-Guard</span></span>
+    </div>
+
+    <div class="timer-badge" id="timerBadge">
+      ⏱️ <span id="timerDisplay">05:00</span>
+    </div>
+
+    <button class="ctrl-btn" id="timerToggleBtn" onclick="toggleTimer()">▶ 시작</button>
+    <button class="ctrl-btn" onclick="prevSlide()">◀ 이전</button>
+    <button class="ctrl-btn" onclick="nextSlide()">다음 ▶</button>
+    <button class="ctrl-btn" id="notesToggleBtn" onclick="toggleNotes()">🎤 대본 (N)</button>
+    <button class="ctrl-btn" onclick="window.print()">🖨️ PDF/인쇄</button>
+  </div>
+
+  <!-- Deck Slides -->
+  <div class="deck-container">
+
+    <!-- ==================== SLIDE 1 ==================== -->
+    <section class="slide active" id="slide-1">
+      <svg class="slide-watermark" viewBox="0 0 72 40">
+        <use href="#sk-happy-wing-symbol"/>
+      </svg>
+
+      <div class="slide-header">
+        <div>
+          <span class="slide-badge">
+            <svg viewBox="0 0 72 40" width="18" height="10">
+              <use href="#sk-happy-wing-symbol"/>
+            </svg>
+            Agent X Challenge 2026
+          </span>
+          <h1 class="slide-title">원하청 적법 도급 관리를 위한<br>실시간 업무 지시 가이드 <span>'Safe-Guard Agent'</span></h1>
+          <p class="slide-subtitle">노란봉투법 및 불법파견 리스크 원천 차단 | FastMCP & Dify 하네스 아키텍처</p>
+        </div>
+        <div class="slide-number">01 / 07</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="grid-3">
+          <div class="card highlight-card">
+            <div class="card-icon">🏭</div>
+            <div class="card-title">제조 현장 법적 리스크</div>
+            <div class="card-desc">
+              반도체/하이테크 제조 현장의 긴밀한 공정 협업 속 <strong>직접 지시, 단톡방 지시, OJT 밀착 교육</strong>으로 인한 위장도급 및 불법파견 소송 리스크 상시 노출.
+            </div>
+          </div>
+          <div class="card highlight-card">
+            <div class="card-icon">⚖️</div>
+            <div class="card-title">노란봉투법 강화</div>
+            <div class="card-desc">
+              노조법 제2조 제2호 개정: 근로계약 체결 당사자가 아니어도 <strong>'실질적 지배력'</strong> 행사 시 하청노조의 단체교섭 의무 및 형사처벌 위험 직결.
+            </div>
+          </div>
+          <div class="card highlight-card">
+            <div class="card-icon">
+              <svg viewBox="0 0 72 40" width="30" height="18" style="vertical-align: middle;">
+                <use href="#sk-happy-wing-symbol"/>
+              </svg>
+            </div>
+            <div class="card-title">Safe-Guard 솔루션</div>
+            <div class="card-desc">
+              지연 없는 결정론적 룰체커와 66개 조항 사내 RAG가 결합된 <strong>5단계 하네스 가드레일</strong>로 현장 실무자의 발화를 실시간 사전 감사하고 적법 도급문으로 자동 변환.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="key-metric">
+          <span>발표자:</span>
+          <span class="val">SK(주) AX 제조AI Data팀 김태균 매니저</span>
+        </div>
+        <div class="nav-dots" id="dotsContainer"></div>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 2 ==================== -->
+    <section class="slide" id="slide-2">
+      <svg class="slide-watermark" viewBox="0 0 72 40">
+        <use href="#sk-happy-wing-symbol"/>
+      </svg>
+
+      <div class="slide-header">
+        <div>
+          <span class="slide-badge">Background & Problem</span>
+          <h2 class="slide-title">현장의 <span>말 한마디</span>가 소송으로 직결됩니다</h2>
+          <p class="slide-subtitle">제조 현장 실무자가 직면한 3대 컴플라이언스 한계와 모순</p>
+        </div>
+        <div class="slide-number">02 / 07</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="grid-3">
+          <div class="card danger-card">
+            <div class="card-icon">🚨</div>
+            <div class="card-title">1. 노란봉투법 '실질적 지배력'</div>
+            <div class="card-desc">
+              • 안전수칙 미준수자에 대한 원청의 <strong>직접 벌점/출입금지</strong> 제재<br>
+              • 생산 일정 맞추기 위한 <strong>휴게시간 단축, 잔업 강제, 라인속도 통제</strong><br>
+              ➜ 원청이 협력사 근로자의 사용자성을 인정하는 결정적 증거로 채택
+            </div>
+          </div>
+
+          <div class="card danger-card">
+            <div class="card-icon">📱</div>
+            <div class="card-title">2. 현장의 일상적 관행 위반</div>
+            <div class="card-desc">
+              • <strong>단체채널방</strong>을 통한 실시간 작업 지시/보고<br>
+              • <strong>스마트팩토리 MES 단말기</strong> 매개 실시간 작업순서 변경<br>
+              • 협력사 신규 입사자에 대한 <strong>원청 관리자의 직접 1:1 OJT 직무교육</strong><br>
+              ➜ 대법원(현대차, 포스코, 삼성) 판례상 원청의 지휘·명령권 행사 1순위 징표 채택
+            </div>
+          </div>
+
+          <div class="card danger-card">
+            <div class="card-icon">⏳</div>
+            <div class="card-title">3. 법무팀 질의 지연의 모순</div>
+            <div class="card-desc">
+              • 라인은 24시간 가동되나 법무/노무팀 질의 회신은 <strong>최소 수 시간 ~ 수 일 소요</strong><br>
+              • 현장 관리자는 납기 압박으로 결국 <strong>'관행적 임의 지시'</strong>를 감행하며 리스크에 상시 노출됨
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="key-metric">
+          <span>위험 노출 빈도:</span>
+          <span class="val">제조 교대근무 현장 일상 업무 지시의 70% 이상이 그레이존</span>
+        </div>
+        <div class="nav-dots"></div>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 3 ==================== -->
+    <section class="slide" id="slide-3">
+      <svg class="slide-watermark" viewBox="0 0 72 40">
+        <use href="#sk-happy-wing-symbol"/>
+      </svg>
+
+      <div class="slide-header">
+        <div>
+          <span class="slide-badge">Core Solutions</span>
+          <h2 class="slide-title">Safe-Guard Agent의 <span>3대 핵심 솔루션</span></h2>
+          <p class="slide-subtitle">결정론적 사전 필터링부터 현장대리인 경유문 재작성, 사내 규정 RAG까지 원스톱 해결</p>
+        </div>
+        <div class="slide-number">03 / 07</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-icon">⚡</div>
+            <div class="card-title">기능 1: 실시간 지시어 감사</div>
+            <div class="card-desc">
+              • 인명 지목, 시간 압박, 직접 명령형 어투를 결정론적 룰셋으로 즉각 탐지<br>
+              • 단체채널, MES 전산 지시, 원하청 혼재작업 정밀 적발<br>
+              • <strong>산업안전보건법 제51조(긴급대피/작업중지권) 행사는 SAFE 0점으로 정당 조치 분별</strong>
+            </div>
+          </div>
+
+          <div class="card highlight-card">
+            <div class="card-icon">✨</div>
+            <div class="card-title">기능 2: 현장대리인(소장) 채널 일원화 및 변환</div>
+            <div class="card-desc">
+              • 개별 작업자 실명 100% 제거<br>
+              • <strong>'협력사 현장대리인(소장) 귀하'</strong> 공식 채널 수신처 지정<br>
+              • 작업 지시(과정)를 도급 목적물 계약 기준(결과) 협조문으로 자동 재작성하여 원클릭 복사 제공
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">📚</div>
+            <div class="card-title">기능 3: 66개 조항 실전 RAG Q&A</div>
+            <div class="card-desc">
+              • 사내 도급 가이드라인(제1~25조), 노동부 실무해설(Q1~20), 대법원 판례(15선) 완전 탑재<br>
+              • OJT 교육, 명절선물, 클린룸 방진복, 인터록, 산재 공상처리 등 <strong>사내 규정 제O조 직접 인용 및 DO & DON'T 행동수칙 제시</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="compare-box">
+          <div class="compare-side">
+            <span class="compare-tag danger">🔴 원청 실무자의 원문 지시 (고위험 발화)</span>
+            <div style="color: var(--sk-red-dark); font-weight: 500;">"협력사 김 대리, 내일 14시까지 3라인 센서 교체 무조건 끝내세요."</div>
+          </div>
+          <div class="compare-side">
+            <span class="compare-tag safe">🟢 Safe-Guard의 소장 경유 변환문 (100% 적법 도급문)</span>
+            <div style="color: #047857; font-weight: 500;">"[협력사 현장대리인(소장) 귀하] 금일 계획된 3라인 센서 교체 도급 건과 관련하여, 계약 사양 및 공정 일정을 준수하여 귀사 관리감독 하에 원활히 진행될 수 있도록 협조 요청드립니다."</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="key-metric">
+          <span>현장 업무 효율:</span>
+          <span class="val">실시간 자동 변환 (원클릭 복사로 현장 즉시 전송)</span>
+        </div>
+        <div class="nav-dots"></div>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 4 ==================== -->
+    <section class="slide" id="slide-4">
+      <svg class="slide-watermark" viewBox="0 0 72 40">
+        <use href="#sk-happy-wing-symbol"/>
+      </svg>
+
+      <div class="slide-header">
+        <div>
+          <span class="slide-badge">Harness Engineering</span>
+          <h2 class="slide-title">왜 단순 챗봇이 아닌 <span>하네스 엔지니어링</span>인가?</h2>
+          <p class="slide-subtitle">확률적 LLM의 불확실성을 가두는 3중 하네스 틀과 5중 무결성 방어벽</p>
+        </div>
+        <div class="slide-number">04 / 07</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="flow-steps">
+          <div class="flow-node active-node">
+            <div class="step-num">STEP 1. PRE-GUARDRAIL</div>
+            <div class="step-title">결정론적 사전 룰체커</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">인명·직접명령·메신저 지표 결정론적 탐지</div>
+          </div>
+          <div class="flow-arrow">➜</div>
+          <div class="flow-node active-node">
+            <div class="step-num">STEP 2. RAG GROUNDING</div>
+            <div class="step-title">66개 사내조항 Grounding</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">사내 규정 및 법률 조항으로 검색 공간 엄격 한정</div>
+          </div>
+          <div class="flow-arrow">➜</div>
+          <div class="flow-node active-node">
+            <div class="step-num">STEP 3. LLM / FALLBACK</div>
+            <div class="step-title">스키마 무결성 보장</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Pydantic 타입 강제 (장애 시 전문가 룰 자동 가동)</div>
+          </div>
+          <div class="flow-arrow">➜</div>
+          <div class="flow-node active-node">
+            <div class="step-num">STEP 4. POST-VERIFIER</div>
+            <div class="step-title">사후 정제 및 검증</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">잔존 실명·직접명령 기계적 소독 및 현장대리인 서식 강제</div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top: 10px;">
+          <div class="card highlight-card">
+            <div class="card-title">💡 LLM 단절 시 Fallback 신뢰성 보장</div>
+            <div class="card-desc">
+              사내 vLLM 서버 다운이나 타임아웃 발생 시, <strong>사내 법무팀이 공증한 '결정론적 전문가 룰 시스템'</strong>이 가동되어 원자 단위로 키워드를 정제하고 표준 적법 서식에 결합하여 100% 무장애 회신.
+            </div>
+          </div>
+          <div class="card highlight-card">
+            <div class="card-title">🛡️ RAG 검색 품질 미달 시 Fail-safe</div>
+            <div class="card-desc">
+              규정 범위를 벗어난 질의 시 조항을 날조하지 않고, <strong>적법 도급 3대 원칙(일의 완성 목적성, 노무관리 독립성, 업무지시 창구 단일화)</strong>으로 안전하게 착륙(Soft-landing)하여 환각 차단.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="key-metric">
+          <span>환각 발생률:</span>
+          <span class="val">0.0% (수학적 룰 + 사후 Verifier 강제 보정)</span>
+        </div>
+        <div class="nav-dots"></div>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 5 ==================== -->
+    <section class="slide" id="slide-5">
+      <svg class="slide-watermark" viewBox="0 0 72 40">
+        <use href="#sk-happy-wing-symbol"/>
+      </svg>
+
+      <div class="slide-header">
+        <div>
+          <span class="slide-badge">Implementation & Dify Integration</span>
+          <h2 class="slide-title">사내 폐쇄망 <span>Dify 오케스트레이터</span> 완전 연동</h2>
+          <p class="slide-subtitle">FastMCP 기반 마이크로서비스로 사내 NPO-MAXIS 및 메신저 완벽 통합</p>
+        </div>
+        <div class="slide-number">05 / 07</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">🔗 Dify 캔버스 파이프라인 (Chatflow)</div>
+            <div class="card-desc" style="font-size: 13.5px;">
+              • <strong>[노드 1] 시작 노드</strong>: 사용자 메신저 질의 인입 (`sys.query`)<br>
+              • <strong>[노드 2] 의도 분류기 Router</strong>: 지시문 검토 vs 노무 Q&A vs 일반 대화 분기<br>
+              • <strong>[노드 3] FastMCP 도구 노드</strong>: 2대 도구 호출 및 하네스 엔진 가동<br>
+              • <strong>[노드 4] 카드 포맷터 노드</strong>: 위험도 뱃지 및 복사 가능한 마크다운 카드 렌더링<br>
+              • <strong>[노드 5] 실시간 답변</strong>: 현장 실무자에게 즉시 결과 및 변환문 전송
+            </div>
+          </div>
+
+          <div class="card success-card">
+            <div class="card-title">🧪 4대 종합 통합 테스트 100% 통과 (Pass)</div>
+            <div class="card-desc" style="font-size: 13.5px;">
+              ✅ <strong>[검증 1] 고위험 지시어 & 노란봉투법 탐지</strong> (인명 지목, 보호구 벌점 제재)<br>
+              ✅ <strong>[검증 2] 그레이존 판별</strong> (청유형 위장 지시 DANGER vs 정당한 하자보수 SAFE)<br>
+              ✅ <strong>[검증 3] 실전 노무 20대 쟁점 RAG Q&A</strong> (OJT, 명절선물, 식대, MES, 잔업 등)<br>
+              ✅ <strong>[검증 4] 최신 법원 판례 4종 검증</strong> (산안법 긴급대피 SAFE 0점, 포스코 단톡방 적발, 현대차 MES 적발, 혼재작업 적발)
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="padding: 14px 20px; background: #FFFDFC; border: 1px solid var(--sk-orange-border);">
+          <div style="font-size: 13px; color: var(--text-main); display:flex; justify-content:space-between; align-items:center;">
+            <span>⚡ <strong>vLLM 호환성 안전장치:</strong> 사내 모델의 `response_format` 400 에러 시 자동 복구(Fallback)</span>
+            <span style="color: var(--sk-red); font-weight:700;">Zero-Config Production Ready</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="key-metric">
+          <span>테스트 통과율:</span>
+          <span class="val">100% (통합 테스트 스위트 전건 무결점 통과)</span>
+        </div>
+        <div class="nav-dots"></div>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 6 ==================== -->
+    <section class="slide" id="slide-6">
+      <svg class="slide-watermark" viewBox="0 0 72 40">
+        <use href="#sk-happy-wing-symbol"/>
+      </svg>
+
+      <div class="slide-header">
+        <div>
+          <span class="slide-badge">Business Impact & Roadmap</span>
+          <h2 class="slide-title">도입 기대효과 및 <span>전사 횡전개 로드맵</span></h2>
+          <p class="slide-subtitle">위법 리스크 사전 예방부터 그룹 관계사 즉시 확장까지</p>
+        </div>
+        <div class="slide-number">06 / 07</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="grid-3">
+          <div class="card highlight-card">
+            <div class="card-icon">💰</div>
+            <div class="card-title">법적/재무 리스크 차단</div>
+            <div class="card-desc">
+              • 불법파견 집단소송 시 발생하는 <strong>임금 차액 소급 지급 및 직접 고용 의무화</strong> 사전 차단<br>
+              • 노란봉투법상 부당노동행위 고발 및 형사처벌 리스크 원천 차단
+            </div>
+          </div>
+
+          <div class="card highlight-card">
+            <div class="card-icon">⏱️</div>
+            <div class="card-title">의사결정 병목 즉시 해결</div>
+            <div class="card-desc">
+              • 실무자가 법무팀에 질의하고 대기하던 <strong>건당 수 시간 ~ 수 일에 달하던 검토 병목을 즉시 실시간 해소</strong><br>
+              • 24시간 교대 현장에서 실무자가 불안감 없이 즉시 적법한 업무 지시 수행
+            </div>
+          </div>
+
+          <div class="card highlight-card">
+            <div class="card-icon">
+              <svg viewBox="0 0 72 40" width="28" height="16" style="vertical-align: middle;">
+                <use href="#sk-happy-wing-symbol"/>
+              </svg>
+            </div>
+            <div class="card-title">전사 및 관계사 즉시 횡전개</div>
+            <div class="card-desc">
+              • 하이테크 제조뿐 아니라 도급 인력을 운영하는 <strong>SK이노베이션 계열, SKC, SK가스 등 그룹 관계사로 규정 룰셋(Rule Pack) 즉시 확장</strong><br>
+              • 현장 질의 로그 비동기 적재를 통한 부서별 컴플라이언스 위험도 진단 대시보드 구축
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="key-metric">
+          <span>기대 절감 효과:</span>
+          <span class="val">법적 분쟁 비용 100% 예방 + 현장 노무 질의 시간 99% 단축</span>
+        </div>
+        <div class="nav-dots"></div>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 7 ==================== -->
+    <section class="slide" id="slide-7">
+      <svg class="slide-watermark" viewBox="0 0 72 40" style="opacity: 0.06; width: 420px; height: 260px;">
+        <use href="#sk-happy-wing-symbol"/>
+      </svg>
+
+      <div class="slide-header">
+        <div>
+          <span class="slide-badge">
+            <svg viewBox="0 0 72 40" width="18" height="10">
+              <use href="#sk-happy-wing-symbol"/>
+            </svg>
+            Conclusion & Q&A
+          </span>
+          <h2 class="slide-title">기술과 법률의 결합, <span>Safe-Guard Agent</span></h2>
+          <p class="slide-subtitle">현장의 말 한마디를 지키는 가장 확실한 하네스 엔지니어링</p>
+        </div>
+        <div class="slide-number">07 / 07</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="card highlight-card" style="padding: 34px 40px; text-align: center; border-color: var(--sk-red-border);">
+          <div style="margin-bottom: 14px;">
+            <svg viewBox="0 0 72 40" width="70" height="42" style="display: inline-block;">
+              <use href="#sk-happy-wing-symbol"/>
+            </svg>
+          </div>
+          <h3 style="font-size: 25px; font-weight: 800; color: var(--text-title); margin-bottom: 12px; line-height: 1.35;">
+            "컴플라이언스는 사후 소송 대응이 아니라,<br>
+            <span style="background:var(--grad-sk); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">현장의 말 한마디를 실시간 보호하는 사전 예방</span>입니다."
+          </h3>
+          <p style="font-size: 15.5px; color: var(--text-muted); max-width: 760px; margin: 0 auto; line-height: 1.7;">
+            Safe-Guard Agent는 <strong>지연 없는 사전 룰체커</strong>, <strong>66개 조항 사내 RAG Grounding</strong>, 그리고 <strong>사후 Verifier 무결성 검증</strong>으로 완성된 하네스 에이전트로서, 사내의 안전한 도급 생태계를 완성합니다.
+          </p>
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 18px; margin-top: 4px;">
+          <div style="background: #FFFFFF; border: 1px solid rgba(0,0,0,0.08); padding: 10px 24px; border-radius: 9999px; font-size: 13.5px; font-weight:600; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+            🏆 <strong>팀명:</strong> Safe-Guard
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid rgba(0,0,0,0.08); padding: 10px 24px; border-radius: 9999px; font-size: 13.5px; font-weight:600; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+            👨‍💻 <strong>발표자:</strong> SK(주) AX 제조AI Data팀 김태균 매니저
+          </div>
+          <div style="background: var(--sk-red-pale); border: 1.5px solid var(--sk-red-border); color: var(--sk-red); padding: 10px 26px; border-radius: 9999px; font-size: 13.5px; font-weight:700;">
+            💬 경청해 주셔서 감사합니다. 질의응답 (Q&A)
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="key-metric">
+          <span>완성도:</span>
+          <span class="val">Production-Ready (사내 폐쇄망 Dify 즉시 배포 가능)</span>
+        </div>
+        <div class="nav-dots"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Speaker Notes Drawer (슬라이드별 실전 대본) -->
+  <div class="notes-drawer" id="notesDrawer">
+    <div class="notes-header">
+      <span>🎤 발표 대본 (Speaker Note) - <span id="noteSlideNum">Slide 1</span> (5분 피치)</span>
+      <button onclick="toggleNotes()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:16px;">✕</button>
+    </div>
+    <div class="notes-body" id="noteContent">
+      대본을 불러오는 중...
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 7;
+    let timerSeconds = 300; // 5분 (300초)
+    let timerInterval = null;
+    let isTimerRunning = false;
+
+    // 각 슬라이드별 장표 시각 요소와 100% 일치하는 실전 발표 대본 (슬라이드 연상 발표 최적화)
+    const speakerNotes = {
+      1: "안녕하십니까, 원하청 적법 도급 관리를 위한 실시간 업무 지시 가이드 에이전트, 'Safe-Guard Agent' 발표를 맡은 제조AI Data팀 김태균 매니저입니다. 보시는 것처럼 제조 현장의 직접 지시 리스크, 최근 노란봉투법 개정으로 인한 실질적 지배력 문제, 그리고 이를 기술적으로 풀어낸 Safe-Guard 솔루션까지, 저희 에이전트가 어떻게 현장의 말 한마디를 실시간 보호하는지 지금부터 말씀드리겠습니다.",
+      2: "다음은 현장 실무자가 실질적으로 직면하고 있는 3대 컴플라이언스 한계점입니다. 첫째, 노란봉투법 개정으로 원청이 하청 작업에 조금만 관여해도 '실질적 지배력'이 인정되어 형사처벌 리스크로 직결됩니다. 둘째, 현장에서는 채팅방 지시나 1:1 OJT 등 일상적 관행 위반이 원청의 지휘·명령권 행사 징표로 채택되고 있습니다. 셋째, 24시간 가동되는 라인에서 법무팀 질의 회신은 즉각적이지 못합니다. 결국 현장 실무자는 관행적 임의 지시를 내리며 구조적 리스크에 상시 노출되어 있었습니다.",
+      3: "다음은 이러한 한계점에 대응하기 위한 Safe-Guard Agent의 3대 핵심 솔루션입니다. 첫째, 인메모리 룰체커로 고위험 지시어를 즉각 탐지하고 긴급대피 명령은 산안법상 정당 조치로 분별합니다. 둘째, '협력사 현장대리인 귀하' 공식 채널을 통한 적법 도급문으로 변환합니다. 셋째, 66개 사내 조항 RAG로 OJT, 명절선물 등 현장 질의에 정확한 DO & DON'T를 제시합니다. 하단 예시를 보시면, '김 대리 무조건 끝내세요'라는 고위험 발화가 인입되더라도, 현장대리인을 경유하는 공식 채널을 통해 결과 중심의 100% 적법 도급문으로 자동 재작성되어 실무자가 원클릭으로 안전하게 전달할 수 있습니다.",
+      4: "그리고 제가 개발한 Agent가 단순 챗봇이 아닌 이유는 '하네스 엔지니어링'에 있습니다. 상단 프로세스를 보시면, 1단계 결정론적 사전 룰체커, 2단계 66개 사내 조항 Grounding, 3단계 엄격한 스키마 무결성 보장, 그리고 4단계 사후 검증기를 통해 혹시나 잔존해 있을지 모를 위험을 기계적으로 후처리합니다. 또한 하단에 보시듯, 사내 LLM이 다운되더라도 법무팀 공증 룰 기반 Fallback이 작동해 무장애 회신을 보장하며, 규정 밖 질문은 도급 3대 원칙으로 안전하게 착륙해 환각을 원천 차단합니다.",
+      5: "실제 사내 폐쇄망 Dify 워크플로우와 FastMCP 연동 결과입니다. 좌측의 Dify 캔버스처럼 질의 시작부터 의도 분류기 Router를 거쳐 FastMCP 도구 호출, 그리고 실시간 마크다운 카드 렌더링까지 유기적으로 동작합니다. 우측에 보시는 바와 같이 고위험 지시어, 그레이존 판별, 20대 실무 쟁점, 최신 대법원 판례 4종까지 4대 통합 테스트를 100% 통과하였습니다.",
+      6: "도입 기대효과 및 전사 횡전개 로드맵입니다. 첫째, 불법파견 집단소송 시 발생하는 임금 차액 소급 등 법적·재무적 리스크를 원천 차단합니다. 둘째, 며칠씩 걸리던 노무 검토 병목을 실시간으로 해결하여 현장 의사결정을 가속화합니다. 셋째, 본 시스템의 룰셋과 RAG 아키텍처는 하이테크 제조뿐 아니라 도급 인력을 운영하는 SK이노베이션 계열, SKC, SK가스 등 그룹 전 관계사로 즉시 횡전개할 수 있습니다.",
+      7: "컴플라이언스는 사후에 소송을 방어하는 것이 아니라, 현장 실무자의 말 한마디를 실시간 보호하는 사전 예방이어야 합니다. 지연 없는 사전 룰체커와 66개 조항 사내 RAG, 그리고 사후 검증기로 완성된 Safe-Guard Agent로 사내의 안전한 도급 생태계를 완성하겠습니다. 경청해 주셔서 감사합니다. 질의응답 받겠습니다."
+    };
+
+    function showSlide(index) {
+      if (index < 1 || index > totalSlides) return;
+      currentSlide = index;
+
+      document.querySelectorAll('.slide').forEach((slide, i) => {
+        slide.classList.toggle('active', i + 1 === currentSlide);
+      });
+
+      // Update dots
+      document.querySelectorAll('.nav-dots').forEach(container => {
+        container.innerHTML = '';
+        for (let i = 1; i <= totalSlides; i++) {
+          const dot = document.createElement('div');
+          dot.className = `dot ${i === currentSlide ? 'active' : ''}`;
+          dot.onclick = () => showSlide(i);
+          container.appendChild(dot);
+        }
+      });
+
+      // Update speaker notes
+      document.getElementById('noteSlideNum').innerText = `Slide ${currentSlide}`;
+      document.getElementById('noteContent').innerText = speakerNotes[currentSlide] || "대본 없음";
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        showSlide(currentSlide + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        showSlide(currentSlide - 1);
+      }
+    }
+
+    function toggleNotes() {
+      const drawer = document.getElementById('notesDrawer');
+      drawer.classList.toggle('open');
+    }
+
+    // Timer Controls
+    function updateTimerDisplay() {
+      const mins = Math.floor(timerSeconds / 60);
+      const secs = timerSeconds % 60;
+      const display = document.getElementById('timerDisplay');
+      const badge = document.getElementById('timerBadge');
+
+      display.innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+      if (timerSeconds <= 30) {
+        badge.classList.add('warning');
+      } else {
+        badge.classList.remove('warning');
+      }
+    }
+
+    function toggleTimer() {
+      const btn = document.getElementById('timerToggleBtn');
+      if (isTimerRunning) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        btn.innerText = '▶ 재개';
+      } else {
+        isTimerRunning = true;
+        btn.innerText = '⏸ 일시정지';
+        timerInterval = setInterval(() => {
+          if (timerSeconds > 0) {
+            timerSeconds--;
+            updateTimerDisplay();
+          } else {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            btn.innerText = '⏱ 종료';
+          }
+        }, 1000);
+      }
+    }
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        toggleNotes();
+      } else if (e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        toggleTimer();
+      }
+    });
+
+    // Initialize
+    showSlide(1);
+    updateTimerDisplay();
+  </script>
+</body>
+</html>

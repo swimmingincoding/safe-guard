@@ -6,7 +6,13 @@
 
 ## 1. 🔄 질문 인입부터 최종 답변 도출까지: E2E 라이프사이클 (Life of a Query)
 
-현장 실무자가 사내 메신저나 웹에서 질의를 입력했을 때, 시스템 내부에서는 **Dify(오케스트레이터)**와 **FastMCP(하네스 엔진)**가 아래의 5단계를 거쳐 1초 만에 안전한 최종 답변을 생성합니다:
+현장 실무자가 사내 메신저나 웹에서 질의를 입력했을 때, 시스템 내부에서는 **Dify(오케스트레이터)**와 **FastMCP(하네스 엔진)**가 의도에 따라 2대 핵심 경로로 분기하여 1초 만에 안전한 최종 답변을 생성합니다.
+
+---
+
+### 1.1 [경로 A] 실시간 업무 지시문 진단 및 변환 (`audit_and_rewrite_direction`)
+
+실무자가 협력사 직원에게 전달하려는 업무 지시문에서 **불법파견 징표(인명 지목, 시간 구속, 직접 명령, 단톡방, MES 지시 등)를 0.001초 만에 적발**하고, 협력사 현장대리인(소장)을 경유하는 **100% 적법한 도급 협조문으로 자동 재작성**하는 라이프사이클입니다.
 
 ```mermaid
 sequenceDiagram
@@ -15,36 +21,90 @@ sequenceDiagram
     participant Dify as Dify Chatflow (Orchestrator)
     participant MCP as FastMCP Server (Harness Core)
     participant Pre as [1차] Pre-Guardrail (0.001초 룰체커)
-    participant RAG as [2차] RAG 사내 조항 검색기
-    participant LLM as [3차] 폐쇄망 LLM 추론기
-    participant Post as [4차] Post-Guardrail Verifier (검증기)
+    participant LLM as [2차] 폐쇄망 LLM (추론 구속)
+    participant Post as [3차] Post-Guardrail Verifier (기계적 멸균 소독)
 
     User->>Dify: 입력: "김 대리, 14시까지 3라인 센서 교체 끝내세요"
-    Note over Dify: [노드 2: 질문 분류기 Router]<br/>지시문 검토 vs 노무 Q&A vs 일반 대화 자동 분기
+    Note over Dify: [노드 2: 질문 분류기 Router]<br/>의도 판별: 클래스 1 (지시문 검토) 분기
     Dify->>MCP: Tool 호출 (audit_and_rewrite_direction)
 
     rect rgb(240, 248, 255)
-        Note over MCP, Post: FastMCP 하네스 내부 3단계 통제 파이프라인
-        MCP->>Pre: 원문 전송 ➜ 0.001초 정규식 스캔
+        Note over MCP, Post: FastMCP 지시문 하네스 3단계 통제 파이프라인
+        MCP->>Pre: 원문 전송 ➜ 0.001초 정규식 스캔 (산안법 긴급대피 예외 판별)
         Pre-->>MCP: 위반 징표 확정: 인명(김 대리), 시간통제(14시까지), 직접명령(끝내세요)
-        MCP->>LLM: 적발 징표 + 노조법 제2조 실제 법문 + 판례 주입 후 지능형 변환 요청
-        LLM-->>MCP: 적법 도급문 후보 JSON 반환 (또는 장애 시 Fallback 가동)
+        MCP->>LLM: 적발 징표 + 노조법 제2조 법문 + 대법원 판례 주입 후 변환 요청
+        LLM-->>MCP: 적법 도급문 후보 JSON 반환 (또는 장애 시 전문가룰 Fallback 가동)
         MCP->>Post: LLM 출력문 적법성 재검증 및 잔존 인명/명령어 기계적 소독(Sanitization)
-        Post-->>MCP: 최종 검증 통과(True) 및 완벽한 JSON 패키징
+        Post-->>MCP: 최종 검증 통과(True) 및 [현장대리인 귀하] 접두어 결합 완결
     end
 
-    MCP-->>Dify: 검증 완료된 컴플라이언스 JSON 반환
+    MCP-->>Dify: 검증 완료된 ComplianceAuditResult JSON 반환
     Note over Dify: [노드 4: 카드 포맷터]<br/>실무자용 고품질 마크다운 카드로 변환
-    Dify-->>User: 🛡️ 위험도 DANGER 경고 + 소장님 경유 복사 가능 변환문 출력
+    Dify-->>User: 🛡️ 위험도 DANGER 경고 + 소장님 경유 원클릭 복사 가능 변환문 출력
 ```
 
-### 📌 2대 핵심 처리 경로:
-1. **업무 지시문 적법성 검토 (`audit_and_rewrite_direction`)**:
-   - `Pre-Guardrail (0.001초 룰체크)` ➜ `노란봉투법/판례 기반 추론` ➜ `Post-Verifier (소장 경유 강제 및 실명 소독)` ➜ `적법 도급문 제안`
-2. **사내 노무 규정 질의 (`search_labor_compliance_qa`)**:
-   - `RAG 검색 (66개 조항 중 최적 조항 발췌)` ➜ `사내 규정 전문 Context 주입` ➜ `Grounded 추론` ➜ `규정 제O조 인용 및 DO & DON'T 행동 지침 제시`
+* **주요 처리 단계**:
+  1. **사전 검사 (Pre-Guardrail)**: `rule_checker.py`가 0.001초 만에 인명, 시간 압박, 명령형 어투를 확정 적발합니다. 단, 산안법 51조/52조 긴급대피 명령(화재, 유독가스 등)은 정당 조치로 인식하여 SAFE 0점으로 자동 예외 처리합니다.
+  2. **추론 구속 (Constrained Reasoning)**: 적발된 징표와 노조법 제2조 제2호 실질적 지배력 법리를 프롬프트에 구속 주입하여 환각을 원천 차단합니다.
+  3. **사후 멸균 소독 (Post-Verification)**: `verifier.py`가 LLM 출력문 내 잔존 실명이나 명령형 어투를 기계적으로 치환하고 `[협력사 현장대리인(소장) 귀하]` 접두어를 강제 부여합니다.
 
 ---
+
+### 1.2 [경로 B] 사내 노무 규정 및 판례 질의응답 (`search_labor_compliance_qa`)
+
+현장에서 빈번하게 발생하는 휴가, 잔업, 명절선물, OJT 직무교육, MES 전산 통제, 산재 공상처리 등 원하청 업무 경계에 대해 **사내 도급 가이드라인(제1~25조), 노동부 실무해설(Q1~20), 대법원 판례(15선) 등 66개 조항을 RAG 검색하여 핀포인트 DO & DON'T 행동 지침을 제시**하는 라이프사이클입니다.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 현장 실무자
+    participant Dify as Dify Chatflow (Orchestrator)
+    participant MCP as FastMCP Server (Harness Core)
+    participant RAG as [1차] 경량 RAG 엔진 (BM25 + 20대 도메인 부스팅)
+    participant LLM as [2차] 폐쇄망 LLM (Grounded 추론기)
+    participant Fallback as [안전망] 2-Tier 도급 원칙 Fallback
+
+    User->>Dify: 입력: "협력사 신규 입사자에게 우리 직원이 1:1 OJT 직무교육을 시켜도 되나요?"
+    Note over Dify: [노드 2: 질문 분류기 Router]<br/>의도 판별: 클래스 2 (노무 Q&A) 분기
+    Dify->>MCP: Tool 호출 (search_labor_compliance_qa)
+
+    rect rgb(245, 255, 250)
+        Note over MCP, Fallback: FastMCP 노무 규정 RAG 통제 파이프라인
+        MCP->>RAG: 질문 분석 ➜ 20대 핵심 키워드(OJT, 직무교육) 가중치 스캔 (+4.0점)
+        RAG-->>MCP: 최적 사내 조항 발췌: 제11조 (신규 입사자 OJT 직무교육 제한)
+        alt RAG 매칭 성공 및 LLM 정상
+            MCP->>LLM: 제11조 전문 Context 주입 + Pydantic 스키마 구속 질의
+            LLM-->>MCP: 규정 기반 DO & DON'T 및 제11조 인용 JSON 반환
+        else RAG 검색 품질 미달 또는 LLM 통신 장애
+            MCP->>Fallback: [Fail-safe] 일반 도급 3대 원칙(민법 664조, 파견법 2조) 발동
+            Fallback-->>MCP: 법무팀 공증 표준 '조건부 허용/주의' JSON 강제 생성
+        end
+    end
+
+    MCP-->>Dify: 검증 완료된 LaborQAResponse JSON 반환
+    Note over Dify: [노드 4: 카드 포맷터]<br/>실무자용 가이드 카드로 렌더링
+    Dify-->>User: 📜 원칙적 불가 경고 + 사내 가이드 제11조 인용 + 현장 DO & DON'T 수칙 회신
+```
+
+* **주요 처리 단계**:
+  1. **고정밀 RAG 검색 (`rag_engine.py`)**: 단순 코사인 유사도가 아닌 **BM25 토큰 매칭 + 20대 핵심 도메인 특별 가중치(+4.0점)**를 결합하여 질문과 연관된 사내 규정 조항(청크)을 0.001초 만에 발췌합니다. 무관한 조항은 0점으로 컷오프(Cutoff)됩니다.
+  2. **Grounded 추론 바운딩**: 발췌된 실제 규정 전문(`Context`)만을 LLM에게 제공하고 *"이 조항에 적힌 내용 범위 내에서만 답변하고, 조항 번호(제O조)를 명시하라"*고 엄격히 한정합니다.
+  3. **2-Tier 도급 원칙 Fallback**: 규정에 없는 엉뚱한 질문이 들어오거나 LLM 응답 장애 시, 억지로 환각을 생성하지 않고 **'일반 도급 3대 원칙(일의 완성, 노무관리 독립성, 현장대리인 경유)'**으로 안전하게 착륙(Soft-landing)합니다.
+  4. **투명한 인용 출처(Citation) 결합**: 최종 응답에 `references: ["제11조 (신규 입사자 OJT 직무교육 제한) (01_subcontract_guidelines.md)"]`를 박아 실무자가 1초 만에 원문을 대조할 수 있도록 보증합니다.
+
+---
+
+### 1.3 2대 핵심 도구(Tool) 파이프라인 비교 매트릭스
+
+| 구분 | 경로 A: 지시문 진단 및 변환 (`audit_and_rewrite_direction`) | 경로 B: 사내 노무 규정 질의 (`search_labor_compliance_qa`) |
+| :--- | :--- | :--- |
+| **주요 목적** | 일상 업무 지시의 불법파견 요건 실시간 필터링 및 소장 경유문 변환 | 원하청 인사·노무 경계에 대한 사내 규정 및 판례 기반 행동 지침 제공 |
+| **입력 데이터** | 실무자가 작성한 업무 지시 원문 (메신저 메시지, 이메일 등) | 실무자가 궁금한 노무/도급 관련 질문 (휴가, OJT, 선물, 잔업 등) |
+| **제1 방어선** | **Pre-Guardrail 정규식 스캔** (인명, 시간압박, 직접명령 적발 / 산안법 예외) | **RAG 도메인 부스팅 & 0점 컷오프** (66개 조항 중 최적 청크 추출) |
+| **제2 통제선** | 노란봉투법(노조법 2조) 및 대법원 선도 판례 기반 추론 구속 | 사내 가이드라인(제1~25조) 원문 Context Grounding (환각 원천 차단) |
+| **제3 검증선** | **Post-Verifier 기계적 멸균 소독** (실명 강제 치환, 소장 접두어 결합) | **Pydantic 스키마 검증** (DO & DON'T 필수 포함, 출처 Citation 결합) |
+| **비상 안전망** | 사내 법무팀 공증 **'결정론적 표준 도급 서식 Fallback'** | 대한민국 파견법·민법 기준 **'일반 도급 3대 원칙 Fallback'** |
+| **반환 스키마** | `ComplianceAuditResult` (위험도, 위반유형, 변환문, 법적근거, 행동지침) | `LaborQAResponse` (요약답변, 적법상태, DO&DONT, 법적근거, 참조조항) |
 
 ## 2. 🏗️ 왜 이것이 '하네스 엔지니어링(Harness Engineering)'인가?
 
